@@ -1,15 +1,43 @@
-telescope_schematics <- function(lens_table,obj)
+telescope_schematics <- function(lens_table_data,obj)
 {
 	library("ggplot2")
 	source("lens_matrix.R")
 
 	
-	lens_table <- lens_table[order(lens_table[,3]),]
+	lens_table <- lens_table_data[order(lens_table_data[,3]),]
 	telescope_matrix <- list()
 	image_matrix <- list()
 	images <- list()
 	inter_image_pos <- list()
 
+	previous_lens_position <- lens_table[1,3]
+	previous_lens_width <- lens_table[1,4]*0.15
+	
+	
+	
+	#Position Correction
+	
+	for(i in 1:nrow(lens_table))
+	{
+	  lens_position <- lens_table[i,3]
+	  lens_width <- lens_table[i,4]*0.15
+	  
+	  lens_distance <- lens_position - previous_lens_position
+	  width_sum <- lens_width + previous_lens_width
+	  
+	  #Position Correction
+	  if(lens_distance>0 && lens_distance < width_sum)
+	  {
+	    
+	    lens_table[i,3] <- previous_lens_position + width_sum
+	    #plot_graph <- plot_graph + annotate("segment",x=previous_lens_position,xend=lens_position,y=previous_ray_end,yend=previous_ray_end, color="dodgerblue")
+	    #plot_graph <- plot_graph + annotate("segment",x=previous_lens_position,xend=lens_position,y=-1*previous_ray_end,yend=-1*previous_ray_end, color="dodgerblue")
+	  }
+	  previous_lens_position <- lens_table[i,3]
+	  previous_lens_width <- lens_table[i,4]*0.15
+	}
+	
+	#print(lens_table)
 
 	obj_matrix <- matrix(c(1/obj,1),nrow=2,ncol=1,byrow=TRUE)
 	matrix_data <- lens_matrix(lens_table)
@@ -21,16 +49,12 @@ telescope_schematics <- function(lens_table,obj)
 		images[[i]] <- 1/images[[i]]
 		image<-images[[i]]
 	}
-#	telescope_matrix <- matrix_data[[length(matrix_data)]]
-#	image_matrix <- telescope_matrix %*% obj_matrix
-#	image <- image_matrix[1,1]/image_matrix[2,1]
-#	image <- 1/image
-#	print(images)
+
 
 	telescope_length <- lens_table[nrow(lens_table),3] - lens_table[1,3]
 
-	print("Telescope Length:")
-	print(telescope_length)
+	#print("Telescope Length:")
+	#print(telescope_length)
 
 	if(obj>2*telescope_length)
 	{
@@ -43,8 +67,8 @@ telescope_schematics <- function(lens_table,obj)
 		infinite_start <- FALSE
 	}
 
-	print("Starting Position:")
-	print(start_pos)
+	#print("Starting Position:")
+	#print(start_pos)
 
 	if(image>lens_table[nrow(lens_table),2]*3)
 	{
@@ -57,11 +81,11 @@ telescope_schematics <- function(lens_table,obj)
 		infinite_end <- FALSE
 	}
 
-	print("Ending Position:")
-	print(end_pos)
+	#print("Ending Position:")
+	#print(end_pos)
 
-	print("Image Distance:")
-	print(image)
+	#print("Image Distance:")
+	#print(image)
 
 	plot_height <- 3*max(lens_table[,4])
 	tel_height <- max(lens_table[,4])*0.5
@@ -82,14 +106,6 @@ telescope_schematics <- function(lens_table,obj)
 		lens_distance <- lens_position - previous_lens_position
 		width_sum <- lens_width + previous_lens_width
 
-
-#Position Correction
-		if(lens_distance>0 && lens_distance < width_sum)
-		{
-			lens_position <- previous_lens_position + width_sum
-			plot_graph <- plot_graph + annotate("segment",x=previous_lens_position,xend=lens_position,y=previous_ray_end,yend=previous_ray_end, color="dodgerblue")
-			plot_graph <- plot_graph + annotate("segment",x=previous_lens_position,xend=lens_position,y=-1*previous_ray_end,yend=-1*previous_ray_end, color="dodgerblue")
-		}
 
 #Convex Lens
 		if(lens_table[i,2]>0)
@@ -128,7 +144,7 @@ telescope_schematics <- function(lens_table,obj)
 #Rays Tracer
 
 		inter_image_pos[[i]] <- lens_position + images[[i]]
-		print(inter_image_pos[[i]])
+		#print(inter_image_pos[[i]])
 	#Real Inverted Image
 		if (i < nrow(lens_table) && inter_image_pos[[i]] > lens_table[i,3] && inter_image_pos[[i]] < lens_table[i+1,3] && inter_image_pos[[i]] > start_pos && inter_image_pos[[i]] < end_pos)
 		{
@@ -198,6 +214,7 @@ telescope_schematics <- function(lens_table,obj)
 	#Image on Infinity
 		else if(i < nrow(lens_table) && (inter_image_pos[[i]] < start_pos || inter_image_pos[[i]] > end_pos))
 		{
+		  #print(inter_image_pos[[i]])
 			plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=lens_table[i+1,3],y=previous_ray_end,yend=previous_ray_end, color="dodgerblue")
 			plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=lens_table[i+1,3],y=-1*previous_ray_end,yend=-1*previous_ray_end, color="dodgerblue")
 		}
@@ -233,6 +250,25 @@ telescope_schematics <- function(lens_table,obj)
 		plot_graph <- plot_graph + annotate("segment",x=lens_table[nrow(lens_table),3],xend=end_pos,y=previous_ray_end,yend=0, color="dodgerblue")
 		plot_graph <- plot_graph + annotate("segment",x=lens_table[nrow(lens_table),3],xend=end_pos,y=-1*previous_ray_end,yend=0, color="dodgerblue")	
 	}
-
+  
+	plot_graph<- plot_graph + annotate("rect", xmin = end_pos*0.6, xmax = end_pos, ymin = plot_height*0.7, ymax = plot_height,alpha = 1,color="white",fill="white")
+	plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.95,label=paste0("Telescope Length: ",round(telescope_length,1)," cm"),size=3.3,hjust=0)
+	if(infinite_start)
+	{
+	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.85,label=paste0("Object Position: -Infinite"),size=3.3,hjust=0)
+	}
+	else
+	{
+	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.85,label=paste0("Object Position: ",round(obj,1)," cm"),size=3.3,hjust=0)
+	}
+	if(infinite_end)
+	{
+	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.75,label=paste0("Image Position: +Infinite"),size=3.3,hjust=0)
+	}
+	else
+	{
+	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.75,label=paste0("Image Position: ",round(image,1)," cm"),size=3.3,hjust=0)
+	}
+	
 	plot_graph
 }
