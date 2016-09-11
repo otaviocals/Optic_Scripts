@@ -13,9 +13,10 @@ telescope_schematics <- function(lens_table_data,obj)
 	previous_lens_position <- lens_table[1,3]
 	previous_lens_width <- lens_table[1,4]*0.15
 	
+	image_height_init <-	lens_table[1,4]*0.5
+	curr_img_height <- image_height_init
 	
-	
-	#Position Correction
+#Position Correction
 	
 	for(i in 1:nrow(lens_table))
 	{
@@ -37,7 +38,7 @@ telescope_schematics <- function(lens_table_data,obj)
 	  previous_lens_width <- lens_table[i,4]*0.15
 	}
 	
-	#print(lens_table)
+	print(lens_table)
 
 	obj_matrix <- matrix(c(1/obj,1),nrow=2,ncol=1,byrow=TRUE)
 	matrix_data <- lens_matrix(lens_table)
@@ -148,14 +149,34 @@ telescope_schematics <- function(lens_table_data,obj)
 	#Real Inverted Image
 		if (i < nrow(lens_table) && inter_image_pos[[i]] > lens_table[i,3] && inter_image_pos[[i]] < lens_table[i+1,3] && inter_image_pos[[i]] > start_pos && inter_image_pos[[i]] < end_pos)
 		{
+			curr_img_height <- -1*curr_img_height
 			plot_graph <- plot_graph + annotate("point",x=inter_image_pos[[i]],y=0)
+			plot_graph <- plot_graph + annotate("segment",x=inter_image_pos[[i]],xend=inter_image_pos[[i]],y=0,yend=curr_img_height,arrow=arrow(),size=1,color="blue")
+			plot_graph <- plot_graph + annotate("segment",x=inter_image_pos[[i]],xend=inter_image_pos[[i]],y=0,yend=-1*curr_img_height,arrow=arrow(),size=1,color="red")
+
 			slope <- -1*previous_ray_end/(inter_image_pos[[i]]-lens_position)
 			ray_end <- slope*(lens_table[i+1,3]-lens_position) + previous_ray_end
 			if(abs(ray_end) < tel_height)
 			{
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=lens_table[i+1,3],y=previous_ray_end,yend=ray_end, color="dodgerblue")
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=lens_table[i+1,3],y=-1*previous_ray_end,yend=-1*ray_end, color="dodgerblue")
-				previous_ray_end <- ray_end
+				#previous_ray_end <- ray_end
+
+				if(abs(ray_end) > lens_table[i+1,4]*0.5)
+				{
+					mid_point <- (-previous_ray_end)/slope + lens_position
+
+
+					plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=0,yend=lens_table[i+1,4]*0.5, color="dodgerblue",linetype=2)
+					plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=0,yend=-1*lens_table[i+1,4]*0.5, color="dodgerblue",linetype=2)
+
+					previous_ray_end <- lens_table[i+1,4]*0.5
+				}
+				else
+				{
+					previous_ray_end <- ray_end
+				}
+
 			}
 			else
 			{
@@ -163,8 +184,11 @@ telescope_schematics <- function(lens_table_data,obj)
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=mid_point,y=previous_ray_end,yend=-1*tel_height, color="dodgerblue")
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=mid_point,y=-1*previous_ray_end,yend=tel_height, color="dodgerblue")
 				previous_ray_end <- tel_height
-				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=previous_ray_end,yend=lens_table[i+1,4]*0.5, color="dodgerblue")
-				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=-1*previous_ray_end,yend=-1*lens_table[i+1,4]*0.5, color="dodgerblue")
+
+				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=previous_ray_end,yend=lens_table[i+1,4]*0.5, color="dodgerblue",linetype=2)
+				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=-1*previous_ray_end,yend=-1*lens_table[i+1,4]*0.5, color="dodgerblue",linetype=2)
+				previous_ray_end <- lens_table[i+1,4]*0.5
+
 			}
 
 		}
@@ -178,6 +202,8 @@ telescope_schematics <- function(lens_table_data,obj)
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=lens_table[i+1,3],y=previous_ray_end,yend=ray_end, color="dodgerblue")
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=lens_table[i+1,3],y=-1*previous_ray_end,yend=-1*ray_end, color="dodgerblue")
 				previous_ray_end <- ray_end
+				
+				
 			}
 			else
 			{
@@ -185,8 +211,10 @@ telescope_schematics <- function(lens_table_data,obj)
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=mid_point,y=previous_ray_end,yend=-1*tel_height, color="dodgerblue")
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=mid_point,y=-1*previous_ray_end,yend=tel_height, color="dodgerblue")
 				previous_ray_end <- tel_height
-				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=previous_ray_end,yend=lens_table[i+1,4]*0.5, color="dodgerblue")
-				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=-1*previous_ray_end,yend=-1*lens_table[i+1,4]*0.5, color="dodgerblue")
+
+				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=previous_ray_end,yend=lens_table[i+1,4]*0.5, color="dodgerblue",linetype=2,linetype=2)
+				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=-1*previous_ray_end,yend=-1*lens_table[i+1,4]*0.5, color="dodgerblue",linetype=2,linetype=2)
+				previous_ray_end <- lens_table[i+1,4]*0.5
 			}
 			
 		}
@@ -207,6 +235,7 @@ telescope_schematics <- function(lens_table_data,obj)
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=mid_point,y=previous_ray_end,yend=-1*tel_height, color="dodgerblue")
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=mid_point,y=-1*previous_ray_end,yend=tel_height, color="dodgerblue")
 				previous_ray_end <- tel_height
+
 				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=previous_ray_end,yend=lens_table[i+1,4]*0.5, color="dodgerblue")
 				plot_graph <- plot_graph + annotate("segment",x=mid_point,xend=lens_table[i+1,3],y=-1*previous_ray_end,yend=-1*lens_table[i+1,4]*0.5, color="dodgerblue")
 			}
@@ -231,11 +260,17 @@ telescope_schematics <- function(lens_table_data,obj)
 	{
 		plot_graph <- plot_graph + annotate("segment",x=start_pos,xend=lens_table[1,3],y=lens_table[1,4]*0.5,yend=lens_table[1,4]*0.5, color="dodgerblue")
 		plot_graph <- plot_graph + annotate("segment",x=start_pos,xend=lens_table[1,3],y=-1*lens_table[1,4]*0.5,yend=-1*lens_table[1,4]*0.5, color="dodgerblue")
+
+		plot_graph <- plot_graph + annotate("segment",x=start_pos,xend=start_pos,y=0,yend=image_height_init,arrow=arrow(),size=1,color="blue")
+		plot_graph <- plot_graph + annotate("segment",x=start_pos,xend=start_pos,y=0,yend=-1*image_height_init,arrow=arrow(),size=1,color="red")
 	}
 	else
 	{
 		plot_graph <- plot_graph + annotate("segment",x=start_pos,xend=lens_table[1,3],y=0,yend=lens_table[1,4]*0.5, color="dodgerblue")
 		plot_graph <- plot_graph + annotate("segment",x=start_pos,xend=lens_table[1,3],y=0,yend=-1*lens_table[1,4]*0.5, color="dodgerblue")
+
+		plot_graph <- plot_graph + annotate("segment",x=start_pos,xend=start_pos,y=0,yend=image_height_init,arrow=arrow(),size=1,color="blue")
+		plot_graph <- plot_graph + annotate("segment",x=start_pos,xend=start_pos,y=0,yend=-1*image_height_init,arrow=arrow(),size=1,color="red")
 	}
 
 #Image Plotter
@@ -244,12 +279,21 @@ telescope_schematics <- function(lens_table_data,obj)
 	{
 		plot_graph <- plot_graph + annotate("segment",x=lens_table[nrow(lens_table),3],xend=end_pos,y=previous_ray_end,yend=previous_ray_end, color="dodgerblue")
 		plot_graph <- plot_graph + annotate("segment",x=lens_table[nrow(lens_table),3],xend=end_pos,y=-1*previous_ray_end,yend=-1*previous_ray_end, color="dodgerblue")
+
+		plot_graph <- plot_graph + annotate("segment",x=end_pos,xend=end_pos,y=0,yend=curr_img_height,arrow=arrow(),size=1,color="blue")
+		plot_graph <- plot_graph + annotate("segment",x=end_pos,xend=end_pos,y=0,yend=-1*curr_img_height,arrow=arrow(),size=1,color="red")
+
 	}
 	else
 	{
 		plot_graph <- plot_graph + annotate("segment",x=lens_table[nrow(lens_table),3],xend=end_pos,y=previous_ray_end,yend=0, color="dodgerblue")
 		plot_graph <- plot_graph + annotate("segment",x=lens_table[nrow(lens_table),3],xend=end_pos,y=-1*previous_ray_end,yend=0, color="dodgerblue")	
+
+		plot_graph <- plot_graph + annotate("segment",x=end_pos,xend=end_pos,y=0,yend=-1*curr_img_height,arrow=arrow(),size=1,color="blue")
+		plot_graph <- plot_graph + annotate("segment",x=end_pos,xend=end_pos,y=0,yend=curr_img_height,arrow=arrow(),size=1,color="red")
 	}
+
+#Legend Plotter
   
 	plot_graph<- plot_graph + annotate("rect", xmin = end_pos*0.6, xmax = end_pos, ymin = plot_height*0.7, ymax = plot_height,alpha = 1,color="white",fill="white")
 	plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.95,label=paste0("Telescope Length: ",round(telescope_length,1)," cm"),size=3.3,hjust=0)
@@ -270,5 +314,8 @@ telescope_schematics <- function(lens_table_data,obj)
 	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.75,label=paste0("Image Position: ",round(image,1)," cm"),size=3.3,hjust=0)
 	}
 	
+#Return
+
 	plot_graph
+
 }
