@@ -52,10 +52,10 @@ telescope_schematics <- function(lens_table_data,obj)
 	}
 
 
-	telescope_length <- lens_table[nrow(lens_table),3] - lens_table[1,3]
 
-	#print("Telescope Length:")
-	#print(telescope_length)
+#Telescope Length, Object Position and Image Position
+
+	telescope_length <- lens_table[nrow(lens_table),3] - lens_table[1,3]
 
 	if(obj>2*telescope_length)
 	{
@@ -68,8 +68,6 @@ telescope_schematics <- function(lens_table_data,obj)
 		infinite_start <- FALSE
 	}
 
-	#print("Starting Position:")
-	#print(start_pos)
 
 	if(image>lens_table[nrow(lens_table),2]*3)
 	{
@@ -82,21 +80,26 @@ telescope_schematics <- function(lens_table_data,obj)
 		infinite_end <- FALSE
 	}
 
-	#print("Ending Position:")
-	#print(end_pos)
-
-	#print("Image Distance:")
-	#print(image)
+#Telescope Height
 
 	plot_height <- 3*max(lens_table[,4])
 	tel_height <- max(lens_table[,4])*0.5
 
+#Initial Plot
+
 	plot_graph <- ggplot() + geom_point() + xlim(start_pos, end_pos) + ylim(-plot_height, plot_height)
+
+
+#Plot Loop
 
 	previous_lens_position <- lens_table[1,3]
 	previous_lens_width <- lens_table[1,4]*0.15
 	previous_ray_end <- lens_table[1,4]*0.5
+	obj_position <- lens_table[1,3]-obj
+	previous_image_position <- obj_position
+	previous_image_height <- lens_table[1,4]*0.5
 
+	#print(previous_image_height)
 
 	for(i in 1:nrow(lens_table))
 	{
@@ -104,19 +107,42 @@ telescope_schematics <- function(lens_table_data,obj)
 		lens_height <- lens_table[i,4]*0.5
 		lens_width <- lens_height*0.3
 
+
+
 		lens_distance <- lens_position - previous_lens_position
 		width_sum <- lens_width + previous_lens_width
 
+#Magnification Calculation
+		if(i<nrow(lens_table))
+		{
+			image_distance <- (1/previous_image_position)+(1/images[[i]])^-1
+			#magnification <- (-1*image_distance/(lens_position-previous_image_position))
+			magnification <- lens_table[i,2]/lens_table[i+1,2]
+			previous_image_height <- previous_image_height * magnification
+			previous_image_position <- image_distance + lens_position
+			#print(paste0(c("Loop number",i)))
+			#print(image_distance + lens_position)		
+			#print(magnification)
+			#print(previous_image_height)
+		}
+		else
+		{
+			#print("Final Magnification")
+			final_magnification <- previous_image_height/(lens_table[1,4]*0.5)
+			#print(final_magnification)
+		}
 
-#Convex Lens
+
+#Convex Lens Plotter
 		if(lens_table[i,2]>0)
 		{
+			print(lens_table[i,1])
 			plot_graph <- plot_graph + annotate("path",
  			  x=lens_position + lens_width*cos(seq(0,2*pi,length.out=100)),
 			   y= 0 + lens_height*sin(seq(0,2*pi,length.out=100)))
 		}
 
-#Concave Lens
+#Concave Lens Plotter
 		else if (lens_table[i,2]<0)
 		{
 			plot_graph <- plot_graph + annotate("path",
@@ -156,6 +182,8 @@ telescope_schematics <- function(lens_table_data,obj)
 
 			slope <- -1*previous_ray_end/(inter_image_pos[[i]]-lens_position)
 			ray_end <- slope*(lens_table[i+1,3]-lens_position) + previous_ray_end
+
+		#Rays Smaller than Tube Radius
 			if(abs(ray_end) < tel_height)
 			{
 				plot_graph <- plot_graph + annotate("segment",x=lens_position,xend=lens_table[i+1,3],y=previous_ray_end,yend=ray_end, color="dodgerblue")
@@ -178,6 +206,8 @@ telescope_schematics <- function(lens_table_data,obj)
 				}
 
 			}
+
+		#Rays Bigger than Tube Radius
 			else
 			{
 				mid_point <- ((-1*tel_height)-previous_ray_end)/slope + lens_position
@@ -295,7 +325,7 @@ telescope_schematics <- function(lens_table_data,obj)
 
 #Legend Plotter
   
-	plot_graph<- plot_graph + annotate("rect", xmin = end_pos*0.6, xmax = end_pos, ymin = plot_height*0.7, ymax = plot_height,alpha = 1,color="white",fill="white")
+	plot_graph<- plot_graph + annotate("rect", xmin = end_pos*0.6, xmax = end_pos, ymin = plot_height*0.6, ymax = plot_height,alpha = 1,color="white",fill="white")
 	plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.95,label=paste0("Telescope Length: ",round(telescope_length,1)," cm"),size=3.3,hjust=0)
 	if(infinite_start)
 	{
@@ -313,6 +343,8 @@ telescope_schematics <- function(lens_table_data,obj)
 	{
 	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.75,label=paste0("Image Position: ",round(image,1)," cm"),size=3.3,hjust=0)
 	}
+	plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.65,label=paste0("Magnification: ",round(final_magnification,1)),size=3.3,hjust=0)
+
 	
 #Return
 
