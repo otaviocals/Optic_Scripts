@@ -1,4 +1,4 @@
-telescope_schematics <- function(lens_table_data,obj, inf_obj = TRUE, inf_img = TRUE,print_arrows = TRUE)
+telescope_schematics <- function(lens_table_data,obj, inf_obj = TRUE, inf_img = TRUE,print_arrows = TRUE, legend = TRUE, text_size=5)
 {
 	library("ggplot2")
 	source("lens_matrix.R")
@@ -170,11 +170,11 @@ telescope_schematics <- function(lens_table_data,obj, inf_obj = TRUE, inf_img = 
 #Name Plotter
 		if(i%%2!=0)
 		{
-			plot_graph <- plot_graph + annotate("text",x=lens_position,y=plot_height*0.25 + (plot_height*0.05*(floor(i/2))%%2),label=lens_table[i,1])
+			plot_graph <- plot_graph + annotate("text",x=lens_position,y=plot_height*0.25 + (plot_height*0.05*(floor(i/2))%%2),label=lens_table[i,1],size=text_size)
 		}
 		else
 		{
-			plot_graph <- plot_graph + annotate("text",x=lens_position,y=-1*plot_height*0.25 - (plot_height*0.05*(floor(i/2))%%2),label=lens_table[i,1])
+			plot_graph <- plot_graph + annotate("text",x=lens_position,y=-1*plot_height*0.25 - (plot_height*0.05*(floor(i/2))%%2),label=lens_table[i,1],size=text_size)
 		}
 
 #Rays Tracer
@@ -346,27 +346,28 @@ telescope_schematics <- function(lens_table_data,obj, inf_obj = TRUE, inf_img = 
 	}
 
 #Legend Plotter
-  
-	plot_graph<- plot_graph + annotate("rect", xmin = end_pos*0.6, xmax = end_pos, ymin = plot_height*0.6, ymax = plot_height,alpha = 1,color="white",fill="white")
-	plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.95,label=paste0("Telescope Length: ",round(telescope_length,1)," cm"),size=3.3,hjust=0)
-	if(infinite_start)
+  	if(legend==TRUE)
 	{
-	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.85,label=paste0("Object Position: -Infinite"),size=3.3,hjust=0)
+		plot_graph<- plot_graph + annotate("rect", xmin = end_pos*0.6, xmax = end_pos, ymin = plot_height*0.6, ymax = plot_height,alpha = 1,color="white",fill="white")
+		plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.95,label=paste0("Telescope Length: ",round(telescope_length,1)," cm"),size=3.3,hjust=0)
+		if(infinite_start)
+		{
+		  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.85,label=paste0("Object Position: -Infinite"),size=3.3,hjust=0)
+		}
+		else
+		{
+		  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.85,label=paste0("Object Position: ",round(obj,1)," cm"),size=3.3,hjust=0)
+		}
+		if(infinite_end)
+		{
+		  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.75,label=paste0("Image Position: +Infinite"),size=3.3,hjust=0)
+		}
+		else
+		{
+		  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.75,label=paste0("Image Position: ",round(image,1)," cm"),size=3.3,hjust=0)
+		}
+		plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.65,label=paste0("Magnification: ",round(final_magnification,1)),size=3.3,hjust=0)
 	}
-	else
-	{
-	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.85,label=paste0("Object Position: ",round(obj,1)," cm"),size=3.3,hjust=0)
-	}
-	if(infinite_end)
-	{
-	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.75,label=paste0("Image Position: +Infinite"),size=3.3,hjust=0)
-	}
-	else
-	{
-	  plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.75,label=paste0("Image Position: ",round(image,1)," cm"),size=3.3,hjust=0)
-	}
-	plot_graph <- plot_graph + annotate("text",x=end_pos*0.61,y=plot_height*0.65,label=paste0("Magnification: ",round(final_magnification,1)),size=3.3,hjust=0)
-
 	
 #Return
 
